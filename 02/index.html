@@ -8,30 +8,21 @@
   <body>
     <script type="module">
       import WeakPromise from "./promise.js";
-      const wp = new WeakPromise((resolve, reject) => {
-        resolve("settimeout resolve");
-      })
-        .then(
-          res => {
-            console.log(res);
-            return new WeakPromise(resolve => {
-              resolve("return promise");
-            });
-          },
-          reason => {
-            console.log(reason);
-            return "reason then";
-          }
-        )
-        .then(
-          res => {
-            console.log(res);
-            return "3th";
-          },
-          reason => {
-            console.log(reason);
-          }
-        );
+      const wp1 = new WeakPromise((resolve, reject) => {
+        resolve("wp1");
+      });
+      const wp2 = new WeakPromise((resolve, reject) => {
+        resolve("wp2");
+      });
+
+      WeakPromise.all([wp1, wp2]).then(
+        value => {
+          console.log(value);
+        },
+        reason => {
+          console.log(reason);
+        }
+      );
     </script>
   </body>
 </html>

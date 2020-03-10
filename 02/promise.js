@@ -39,30 +39,34 @@ class WeakPromise {
     if (typeof onRejected !== "function") {
       onRejected = () => this.value;
     }
-    return new WeakPromise((resolve, reject) => {
+    const wp = new WeakPromise((resolve, reject) => {
       if (this.status === WeakPromise.FULFILLED) {
         setTimeout(() => {
-          this.parse(onFulfilled(this.value), resolve, reject);
+          this.parse(wp, onFulfilled(this.value), resolve, reject);
         });
       }
       if (this.status === WeakPromise.REJECTED) {
         setTimeout(() => {
-          this.parse(onRejected(this.value), resolve, reject);
+          this.parse(wp, onRejected(this.value), resolve, reject);
         });
       }
       if (this.status === WeakPromise.PENDING) {
         this.callbacks.push({
           onFulfilled: value => {
-            this.parse(onFulfilled(value), resolve, reject);
+            this.parse(wp, onFulfilled(value), resolve, reject);
           },
           onRejected: value => {
-            this.parse(onRejected(value), resolve, reject);
+            this.parse(wp, onRejected(value), resolve, reject);
           }
         });
       }
     });
+    return wp;
   }
-  parse(result, resolve, reject) {
+  parse(wp, result, resolve, reject) {
+    if (wp == result) {
+      throw new TypeError("Chaining cycle detected for weak promise");
+    }
     try {
       if (result instanceof WeakPromise) {
         result.then(resolve, reject);
@@ -72,6 +76,52 @@ class WeakPromise {
     } catch (error) {
       reject(error);
     }
+  }
+  static resolve(value) {
+    return new WeakPromise((resolve, reject) => {
+      if (value instanceof WeakPromise) {
+        value.then(resolve, reject);
+      } else {
+        resolve(value);
+      }
+    });
+  }
+  static reject(value) {
+    return new WeakPromise((resolve, reject) => {
+      reject(value);
+    });
+  }
+  static all(wps) {
+    const values = [];
+    return new WeakPromise((resolve, reject) => {
+      wps.forEach(wp => {
+        wp.then(
+          value => {
+            values.push(value);
+            if (values.length === wps.length) {
+              resolve(values);
+            }
+          },
+          reason => {
+            reject(reason);
+          }
+        );
+      });
+    });
+  }
+  static race(wps) {
+    return new WeakPromise((resolve, reject) => {
+      wps.forEach(wp => {
+        wp.then(
+          value => {
+            resolve(value);
+          },
+          reason => {
+            reject(reason);
+          }
+        );
+      });
+    });
   }
 }
 export default WeakPromise;
