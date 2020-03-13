@@ -19,3 +19,4 @@ Function.prototype.feakApply = function(context = window, args) {
 
 // const res = add.feakApply(obj, [3, 4, 5]);
 // console.log("res", res);
+export default Function;
