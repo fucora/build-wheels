@@ -1,22 +1,21 @@
-Function.prototype.feakCall = function(context) {
-  if (typeof this !== 'function') throw new TypeError('this is not a function')
-  const context = context || window
-  context.fn = this
+Function.prototype.feakCall = function(context = window, ...args) {
+  if (typeof this !== "function") throw new TypeError("this is not a function");
+  if (typeof context !== "object") throw new TypeError("this is not a Object");
+  const fn = Symbol();
+  context[fn] = this;
+  const res = context[fn](...args);
+  delete context[fn];
+  return res;
+};
 
-  const args = []
-  for (let i = 0; i < arguments.length; i++) {
-    args.push(`arguments[${i}]`)
-  }
+// function add(i, j, k) {
+//   return this.x + this.y + i + j + k;
+// }
 
-  const res = eval(`context.fn(${args})`)
-  return res
-}
+// const obj = {
+//   x: 1,
+//   y: 2
+// };
 
-function add() {
-  return this.x + this.y
-}
-const obj = {
-  x: 1,
-  y: 2
-}
-add.call(obj)
+// const res = add.feakApply(obj, [3, 4, 5]);
+// console.log("res", res);
